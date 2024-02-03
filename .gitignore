@@ -1,0 +1,58 @@
+# Laravel specific
+.env
+.env.*
+.env.local
+.env.development
+.env.testing
+.env.production
+/vendor
+/node_modules
+/public/hot
+/storage/*.key
+/storage/logs/*.log
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/app/*.log
+/database/*.sqlite
+/storage/*.sqlite
+/storage/*.sqlite3
+/storage/*.sqlite-journal
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+
+# Homestead
+Homestead.yaml
+Homestead.json
+
+# Laravel Mix
+/public/css/*
+/public/js/*
+/public/mix-manifest.json
+
+# Laravel Telescope
+/telescope/*.json
+/telescope/*.lock
+/telescope/*.sqlite
+/telescope/storage
+/telescope/*.log
+
+# PHPUnit
+/phpunit.xml
+/phpunit-*.xml
+
+# Sublime Text
+/*.sublime-project
+/*.sublime-workspace
+
+# VS Code
+.vs
