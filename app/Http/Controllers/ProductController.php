@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\ProductResource;
+use Illuminate\Support\Str;
 
 
 class ProductController extends Controller
@@ -46,7 +47,6 @@ class ProductController extends Controller
     {
         $validator = Validator::make($request->all(),[
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|unique:products',
             'category_id' => 'required|exists:categories,id',
             'selling_price' => 'required|numeric',
             'discount' => 'numeric',
@@ -62,8 +62,16 @@ class ProductController extends Controller
                 'errors' => $validator->errors(),
             ], 422);
         }
-
+        
         try {
+            $slug = Str::slug($request->input('name'));
+        // Check if the slug already exists
+        $existingSlug = Product::where('slug', $slug)->exists();
+        if ($existingSlug) {
+            // If the slug already exists, modify it to make it unique
+            $slug = $this->makeUniqueSlug($slug);
+        }
+            $request->merge(['slug'=>$slug]);
             $product = Product::create($request->except('images','variants'));
 
             $imagePaths = [];
@@ -125,4 +133,18 @@ class ProductController extends Controller
     {
         //
     }
+
+    private function makeUniqueSlug($slug)
+{
+    // Append a number to the slug to make it unique
+    $baseSlug = $slug;
+    $counter = 1;
+
+    while (Product::where('slug', $slug)->exists()) {
+        $slug = $baseSlug . '-' . $counter;
+        $counter++;
+    }
+
+    return $slug;
+}
 }
