@@ -148,23 +148,27 @@ class CategoryController extends Controller
 
     public function getProducts(Request $request) {
         try {
-            $inputs=$request->all();
-            $perPage=$inputs['per_page'];
-            $records = Product::paginate($perPage);
-
+            $inputs = $request->all();
+            $perPage = $inputs['per_page'];
+            $records = Product::with('images')->where('is_feature',1)->paginate($perPage);
+            $maxPage = ceil($records->total() / $records->perPage());
             return response()->json([
                 'data' => $records->items(),
                 'pagination' => [
                     'current_page' => $records->currentPage(),
                     'per_page' => $records->perPage(),
                     'total' => $records->total(),
+                    'next_page' => $records->currentPage()+1,
+                    'max_page' =>$maxPage // Provide the next page URL
                 ],
-            ]);
-
+                'success' => true,
+            ],200);
+    
         } catch (\Throwable $th) {
-            //throw $th;
+            // Handle the exception if needed
         }
     }
+    
 
     private function makeUniqueSlug($slug)
 {

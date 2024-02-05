@@ -72,6 +72,7 @@ class ProductController extends Controller
             $slug = $this->makeUniqueSlug($slug);
         }
             $request->merge(['slug'=>$slug]);
+            
             $product = Product::create($request->except('images','variants'));
 
             $imagePaths = [];
