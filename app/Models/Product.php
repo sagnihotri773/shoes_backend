@@ -19,6 +19,7 @@ class Product extends Model
         'selling_price',
         'discount',
         'price',
+        'is_feature'
     ];
 
     public function category()

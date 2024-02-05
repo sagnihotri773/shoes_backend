@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\CategoryResource;
+use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -32,10 +34,19 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:categories',
+            // 'slug' => 'required|string|max:255|unique:categories',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
         try {
+                $slug = Str::slug($request->input('name'));
+                // Check if the slug already exists
+                $existingSlug = Category::where('slug', $slug)->exists();
+                if ($existingSlug) {
+                    // If the slug already exists, modify it to make it unique
+                    $slug = $this->makeUniqueSlug($slug);
+                }
+
+            $request->merge(['slug'=>$slug]);
             $category = new Category($request->only(['name', 'status', 'slug']));
 
             if ($request->hasFile('image')) {
@@ -129,10 +140,49 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching products by category',
-                'error' => $e->getMessage(),
+                'error' => $th->getMessage(),
             ], 500);
         }
     }
+
+
+    public function getProducts(Request $request) {
+        try {
+            $inputs = $request->all();
+            $perPage = $inputs['per_page'];
+            $records = Product::with('images')->where('is_feature',1)->paginate($perPage);
+            $maxPage = ceil($records->total() / $records->perPage());
+            return response()->json([
+                'data' => $records->items(),
+                'pagination' => [
+                    'current_page' => $records->currentPage(),
+                    'per_page' => $records->perPage(),
+                    'total' => $records->total(),
+                    'next_page' => $records->currentPage()+1,
+                    'max_page' =>$maxPage // Provide the next page URL
+                ],
+                'success' => true,
+            ],200);
+    
+        } catch (\Throwable $th) {
+            // Handle the exception if needed
+        }
+    }
+    
+
+    private function makeUniqueSlug($slug)
+{
+    // Append a number to the slug to make it unique
+    $baseSlug = $slug;
+    $counter = 1;
+
+    while (Category::where('slug', $slug)->exists()) {
+        $slug = $baseSlug . '-' . $counter;
+        $counter++;
+    }
+
+    return $slug;
+}
 }
 
 
