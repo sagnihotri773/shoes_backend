@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\CategoryResource;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class CategoryController extends Controller
@@ -16,7 +18,6 @@ class CategoryController extends Controller
     {
         try {
             $categories = Category::select('id', 'name', 'status', 'slug', 'image')->get();
-
             return response()->json([
                 'success' => true,
                 'data' => CategoryResource::collection($categories),
@@ -68,6 +69,84 @@ class CategoryController extends Controller
             ], 500);
         }
     }
+
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'selling_price' => 'required|numeric',
+            'discount' => 'numeric',
+            'price' => 'required|numeric',
+            'images' => 'array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $product = Product::findOrFail($id);
+
+            $slug = Str::slug($request->input('name'));
+            // Check if the slug already exists for other products
+            $existingSlug = Product::where('slug', $slug)->where('id', '!=', $id)->exists();
+            if ($existingSlug) {
+                // If the slug already exists for other products, modify it to make it unique
+                $slug = $this->makeUniqueSlug($slug);
+            }
+
+            $request->merge(['slug' => $slug]);
+
+            $product->update($request->except('images', 'variants'));
+
+            // Handle images
+            if ($request->hasFile('images')) {
+                $imagePaths = $product->images ?? [];
+
+                foreach ($request->file('images') as $image) {
+                    $imagePath = $image->store('product_images', 'public');
+                    $imagePaths[] = $imagePath;
+                }
+
+                // Delete old images before attaching new ones
+                // if (!empty($product->images)) {
+                //     $oldImagePaths = $product->images;
+                //     foreach ($oldImagePaths as $oldImagePath) {
+                //         Storage::disk('public')->delete($oldImagePath);
+                //     }
+                // }
+
+                ProductImage::updateOrCreate(
+                    ['product_id' => $product->id],
+                    ['images' => $imagePaths]
+                );
+            }
+
+            // Update variants (assuming you have a relationship between Product and Variant)
+            $product->variants()->detach();
+            foreach ($request->input('variants') as $variant) {
+                $product->variants()->attach($variant['id'], ['quantity' => $variant['quantity']]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new ProductResource($product),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating product',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     public function getProductsByCategory($categoryName)
     {

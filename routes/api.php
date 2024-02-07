@@ -5,10 +5,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
-
+use App\Http\Controllers\Front\CartContoller;
+use App\Http\Controllers\Api\AuthController;
 
 Route::post('login',[LoginController::class,'login']);
 
+
+
+Route::post('/register', [AuthController::class, 'register']);
+// Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
@@ -32,3 +38,23 @@ Route::prefix('admin')->middleware([])->group(function (){
     Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.create');
     //Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.store');
 });
+
+//global routes
+
+// Add to Cart
+Route::post('/add-to-cart/{product}', [CartContoller::class, 'addToCart'])->name('addToCart');
+Route::get('/get-cart', [CartContoller::class, 'getCart'])->name('getCart');
+
+// Clear Cart
+Route::post('/clear-cart', [CartContoller::class, 'clearCart'])->name('clearCart');
+// Add to Favorites
+Route::post('/add-to-favorites/{product}', [ProductController::class, 'addToFavorites'])->name('addToFavorites');
+
+
+
+// Clear Favorites
+Route::post('/clear-favorites', [ProductController::class, 'clearFavorites'])->name('clearFavorites');
+
+
+Route::post('/remove-from-favorites/{product}', [ProductController::class, 'removeFromFavorites'])->name('removeFromFavorites');
+
