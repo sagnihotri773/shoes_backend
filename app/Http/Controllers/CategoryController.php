@@ -21,6 +21,16 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => CategoryResource::collection($categories),
+                'meta'=>[
+                    'title'=>[
+                    "id",
+                    "name",
+                    "status",
+                    "image",
+                    "created_at",
+                    "updated_at"
+                    ]
+                ]
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -33,11 +43,21 @@ class CategoryController extends Controller
 
     public function storeCategory(Request $request)
     {
-        $request->validate([
+        $validator=Validator::make($request->all(),[
             'name' => 'required|string|max:255',
             // 'slug' => 'required|string|max:255|unique:categories',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+    
+
         try {
                 $slug = Str::slug($request->input('name'));
                 // Check if the slug already exists
