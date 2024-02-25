@@ -12,8 +12,6 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-
-
     public function getProductBySlug($slug)
     {
         try {

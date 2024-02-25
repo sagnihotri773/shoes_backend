@@ -29,12 +29,13 @@ Route::post('get-categories-products', [CategoryController::class, 'productsWith
 
 Route::get('get-product/{name}', [ProductController::class, 'getProductBySlug']);
 // Route::get('category/{category-name}', [CategoryController::class, 'getCategories']);
-Route::prefix("categories")->group(function(){
-    Route::post('add', [CategoryController::class, 'storeCategory']);
-});
+
 
 
 Route::prefix('admin')->middleware([])->group(function (){
+    Route::prefix("categories")->group(function(){
+        Route::post('add', [CategoryController::class, 'storeCategory']);
+    });
     Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.create');
     //Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.store');
 });
