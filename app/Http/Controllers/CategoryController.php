@@ -22,7 +22,7 @@ class CategoryController extends Controller
                 'success' => true,
                 'data' => CategoryResource::collection($categories),
                 'meta'=>[
-                    'title'=>[
+                    'table'=>[
                     "id",
                     "name",
                     "status",
@@ -90,16 +90,12 @@ class CategoryController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'selling_price' => 'required|numeric',
-            'discount' => 'numeric',
-            'price' => 'required|numeric',
-            'images' => 'array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -111,60 +107,42 @@ class CategoryController extends Controller
         }
 
         try {
-            $product = Product::findOrFail($id);
-
             $slug = Str::slug($request->input('name'));
-            // Check if the slug already exists for other products
-            $existingSlug = Product::where('slug', $slug)->where('id', '!=', $id)->exists();
+            // Check if the slug already exists
+            $categoryId=$request->input('category_id');
+            $existingSlug = Category::where('slug', $slug)->whereNotIn('id',$categoryId)->exists();
             if ($existingSlug) {
-                // If the slug already exists for other products, modify it to make it unique
+                // If the slug already exists, modify it to make it unique
                 $slug = $this->makeUniqueSlug($slug);
             }
 
-            $request->merge(['slug' => $slug]);
+        $request->merge(['slug'=>$slug]);
+        $categoryData = Category::find($categoryId);
 
-            $product->update($request->except('images', 'variants'));
+        $categoryData->name = $request->input('name');
+        $categoryData->status = $request->input('status');
+        $categoryData->slug = $request->input('slug');
+        
 
-            // Handle images
-            if ($request->hasFile('images')) {
-                $imagePaths = $product->images ?? [];
-
-                foreach ($request->file('images') as $image) {
-                    $imagePath = $image->store('product_images', 'public');
-                    $imagePaths[] = $imagePath;
-                }
-
-                // Delete old images before attaching new ones
-                // if (!empty($product->images)) {
-                //     $oldImagePaths = $product->images;
-                //     foreach ($oldImagePaths as $oldImagePath) {
-                //         Storage::disk('public')->delete($oldImagePath);
-                //     }
-                // }
-
-                ProductImage::updateOrCreate(
-                    ['product_id' => $product->id],
-                    ['images' => $imagePaths]
-                );
-            }
-
-            // Update variants (assuming you have a relationship between Product and Variant)
-            $product->variants()->detach();
-            foreach ($request->input('variants') as $variant) {
-                $product->variants()->attach($variant['id'], ['quantity' => $variant['quantity']]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => new ProductResource($product),
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating product',
-                'error' => $e->getMessage(),
-            ], 500);
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('category_images', 'public');
+            $categoryData->image = $imagePath;
         }
+
+        $categoryData->save();
+
+        return response()->json([
+            'success' => true,
+            'data' => $categoryData,
+        ], 201);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error storing category',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+
     }
 
 
@@ -200,7 +178,6 @@ class CategoryController extends Controller
     public function productsWithFilters(Request $request)
     {
             try {
-                
             $categorySlug=$request->input('category_slug');
             $searchKeyword = $request->input('searchkeyword');
             $orderBy = $request->input('orderby', 'price_low'); // Default order by price low
@@ -252,7 +229,8 @@ class CategoryController extends Controller
             $records = Product::with('images')->where('is_feature',1)->paginate($perPage);
             $maxPage = ceil($records->total() / $records->perPage());
             return response()->json([
-                'data' => $records->items(),
+                
+                'data' =>ProductResource::collection($records),
                 'pagination' => [
                     'current_page' => $records->currentPage(),
                     'per_page' => $records->perPage(),
@@ -282,6 +260,40 @@ class CategoryController extends Controller
 
     return $slug;
 }
+
+public function updateStatus(Request $request)
+    {
+        //status only 0 and 1
+        $validator=Validator::make($request->all(),[
+            'category_id' => 'required',
+            'status'=>'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $inputs = $request->all();
+            Category::where('id', $inputs['category_id'])->update(['status'=> $inputs['status']]);
+            $categoryData=Category::find($inputs['category_id']);
+            return response()->json([
+                'success' => true,
+                'data' => $categoryData,
+            ], 201);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error storing category',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+
+    }
 }
 
 
