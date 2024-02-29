@@ -44,7 +44,7 @@ class CategoryController extends Controller
     public function storeCategory(Request $request)
     {
         $validator=Validator::make($request->all(),[
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:categories',
             // 'slug' => 'required|string|max:255|unique:categories',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -93,7 +93,6 @@ class CategoryController extends Controller
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -107,23 +106,11 @@ class CategoryController extends Controller
         }
 
         try {
-            $slug = Str::slug($request->input('name'));
-            // Check if the slug already exists
-            $categoryId=$request->input('category_id');
-            $existingSlug = Category::where('slug', $slug)->whereNotIn('id',$categoryId)->exists();
-            if ($existingSlug) {
-                // If the slug already exists, modify it to make it unique
-                $slug = $this->makeUniqueSlug($slug);
-            }
-
-        $request->merge(['slug'=>$slug]);
+            
+        $categoryId=$request->input('category_id');
         $categoryData = Category::find($categoryId);
-
-        $categoryData->name = $request->input('name');
         $categoryData->status = $request->input('status');
-        $categoryData->slug = $request->input('slug');
-        
-
+      
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('category_images', 'public');
             $categoryData->image = $imagePath;
@@ -280,10 +267,10 @@ public function updateStatus(Request $request)
         try {
             $inputs = $request->all();
             Category::where('id', $inputs['category_id'])->update(['status'=> $inputs['status']]);
-            $categoryData=Category::find($inputs['category_id']);
+           // $categoryData=Category::find($inputs['category_id']);
             return response()->json([
                 'success' => true,
-                'data' => $categoryData,
+                'data' => "Status Update",
             ], 201);
     } catch (\Exception $e) {
         return response()->json([
