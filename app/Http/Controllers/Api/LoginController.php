@@ -22,10 +22,10 @@ class LoginController extends Controller
                 if(Auth::attempt($request->only(['email','password']))){
                     $token = Auth::user()->createToken('bearerToken')->plainTextToken;
                     $statusCode=200;
-                    $response=['token' => $token,'msg'=>'login Success','user'=>Auth::user(),'status'=>true];
+                    $response=['token' => $token,'message'=>'User login Success','user'=>Auth::user(),'success'=>true];
                 }else{
                     $statusCode=401;
-                    $response=['sttaus' => false,'msg'=>'Invalid Credential','user'=>null];
+                    $response=['success' => false,'message'=>'Invalid Credential'];
                 }
             }
 
