@@ -6,14 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class LoginController extends Controller
 {
     public function login(Request $request){
-        $this->validate($request, [
+        $validator = Validator::make($request->all(),[
             'email'=>['required','email'],
             'password'=>['required']
         ]);
+
+        if ($validator->fails()){
+            return response()->json(['error'=>$validator->errors()],422);
+        }
 
             $user = User::where('email',$request->email)->first();
             $statusCode=401;

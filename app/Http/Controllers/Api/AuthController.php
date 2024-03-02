@@ -7,17 +7,23 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        $validatedData = $request->validate([
+        $validatedData = $request->input();
+
+        $validator = Validator::make($request->all(),[
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
         ]);
 
+        if ($validator->fails()){
+            return response()->json(['error'=>$validator->errors()],422);
+        }
         $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
@@ -31,28 +37,6 @@ class AuthController extends Controller
         return response()->json(['token' => $token], 201);
     }
 
-    public function login(Request $request){
-        $this->validate($request, [
-            'email'=>['required','email'],
-            'password'=>['required']
-        ]);
-
-            $user = User::where('email',$request->email)->first();
-            $statusCode=401;
-            $response=['sttaus' => false,'msg'=>'User Not Exist','user'=>null];
-            if($user){
-                if(Auth::attempt($request->only(['email','password']))){
-                    $token = Auth::user()->createToken('bearerToken')->plainTextToken;
-                    $statusCode=200;
-                    $response=['token' => $token,'msg'=>'login Success','user'=>Auth::user(),'status'=>true];
-                }else{
-                    $statusCode=401;
-                    $response=['sttaus' => false,'msg'=>'Invalid Credential','user'=>null];
-                }
-            }
-
-            return response()->json($response, $statusCode);
-    }
 
     public function logout(Request $request)
     {
