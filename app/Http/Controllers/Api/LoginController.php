@@ -17,15 +17,15 @@ class LoginController extends Controller
 
             $user = User::where('email',$request->email)->first();
             $statusCode=401;
-            $response=['sttaus' => false,'msg'=>'User Not Exist','user'=>null];
+            $response=['status' => false,'msg'=>'User Not Exist'];
             if($user){
                 if(Auth::attempt($request->only(['email','password']))){
                     $token = Auth::user()->createToken('bearerToken')->plainTextToken;
                     $statusCode=200;
-                    $response=['token' => $token,'message'=>'User login Success','user'=>Auth::user(),'success'=>true];
+                    $response=['token' => $token,'message'=>'User login Success','user'=>Auth::user(),'status'=>true];
                 }else{
                     $statusCode=401;
-                    $response=['success' => false,'message'=>'Invalid Credential'];
+                    $response=['status' => false,'message'=>'Invalid Credential'];
                 }
             }
 
