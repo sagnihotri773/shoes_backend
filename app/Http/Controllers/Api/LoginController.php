@@ -36,4 +36,9 @@ class LoginController extends Controller
 
             return response()->json($response, $statusCode);
     }
+
+    public function checkLogin(){
+       
+            return response()->json(['error' => 'Unauthorized'], 401);
+    }
 }

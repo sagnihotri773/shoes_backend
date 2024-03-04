@@ -51,7 +51,7 @@ class CategoryController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors(),
             ], 422);
@@ -281,6 +281,20 @@ public function updateStatus(Request $request)
     }
 
     }
+
+    //find
+
+    public function edit(Request $request,$id){
+        $category=Category::find($id);
+        if (!$category) {
+            return response()->json(['success' => false, 'message' => 'Category not found'], 404);
+        }
+    
+        return response()->json(['success' => true, 'data' => new CategoryResource($category)], 200);
+    
+    }
+
+
 }
 
 

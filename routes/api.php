@@ -31,12 +31,13 @@ Route::get('get-product/{name}', [ProductController::class, 'getProductBySlug'])
 // Route::get('category/{category-name}', [CategoryController::class, 'getCategories']);
 
 
-
-Route::prefix('admin')->middleware([])->group(function (){
+Route::prefix('admin')->middleware('auth:api')->group(function (){
     Route::prefix("categories")->group(function(){
         Route::post('add', [CategoryController::class, 'storeCategory']);
         Route::post('update', [CategoryController::class, 'update']);
         Route::post('update-status', [CategoryController::class, 'updateStatus']);
+        Route::get('edit/{id}', [CategoryController::class, 'edit']);
+
 
     });
     Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.create');
