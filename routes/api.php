@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\UsersContoller;
 use App\Http\Controllers\Api\LoginController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -17,7 +18,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
+Route::middleware(['auth:api','admin'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
@@ -31,14 +32,16 @@ Route::get('get-product/{name}', [ProductController::class, 'getProductBySlug'])
 // Route::get('category/{category-name}', [CategoryController::class, 'getCategories']);
 
 
-Route::prefix('admin')->middleware('auth:api')->group(function (){
+Route::prefix('admin')->middleware(['auth:api','admin'])->group(function (){
     Route::prefix("categories")->group(function(){
         Route::post('add', [CategoryController::class, 'storeCategory']);
         Route::post('update', [CategoryController::class, 'update']);
         Route::post('update-status', [CategoryController::class, 'updateStatus']);
         Route::get('edit/{id}', [CategoryController::class, 'edit']);
-
-
+    });
+    Route::prefix("users")->group(function(){
+        Route::post('/', [UsersContoller::class, 'index']);
+        Route::get('edit/{id}', [UsersContoller::class, 'show']);
     });
     Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.create');
     //Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.store');
