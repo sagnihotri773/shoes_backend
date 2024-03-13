@@ -17,7 +17,7 @@ class ApiMiddleware extends Middleware
     {
         //$this->authenticate($request, $guards);
         if ($request->expectsJson()) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Unauthorizeddd'], 401);
         }
 
         // For non-JSON requests, you can customize the response accordingly
