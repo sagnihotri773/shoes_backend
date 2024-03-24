@@ -19,10 +19,6 @@ class ApiMiddleware extends Middleware
         if ($request->expectsJson()) {
             return response()->json(['error' => 'Unauthorizeddd'], 401);
         }
-
-        // For non-JSON requests, you can customize the response accordingly
-        // For example, you can redirect to a login page or return a view
-
         return $next($request);
     }
 }

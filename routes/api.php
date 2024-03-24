@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\Admin\UsersContoller;
 use App\Http\Controllers\Api\LoginController;
 use Illuminate\Http\Request;
@@ -10,8 +11,6 @@ use App\Http\Controllers\Front\CartContoller;
 use App\Http\Controllers\Api\AuthController;
 
 Route::post('login',[LoginController::class,'login']);
-
-
 
 Route::post('/register', [AuthController::class, 'register']);
 // Route::post('/login', [AuthController::class, 'login']);
@@ -43,6 +42,8 @@ Route::prefix('admin')->middleware(['auth:api','admin'])->group(function (){
         Route::post('/', [UsersContoller::class, 'index']);
         Route::get('edit/{id}', [UsersContoller::class, 'show']);
     });
+
+    Route::post('dashboard', [AdminDashboardController::class, 'index']);
     Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.create');
     //Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.store');
 });
